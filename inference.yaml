@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inference-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: inference
+  template:
+    metadata:
+      labels:
+        app: inference
+    spec:
+      # Optional: force scheduling to a specific node.
+      # Remove or comment this line if you want Kubernetes to schedule the pod automatically.
+      nodeName: gke-kub-cluster-main-default-pool-844b9c40-0xj7
+      containers:
+      - name: inference-container
+        image: us-east1-docker.pkg.dev/performance-modeling-analysis/training-image/inference-image1:latest
+        ports:
+        - containerPort: 8112
+        volumeMounts:
+        - name: model-volume
+          mountPath: /model
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+      volumes:
+      - name: model-volume
+        persistentVolumeClaim:
+          claimName: pvc-model-bucket
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: inference-service
+spec:
+  type: LoadBalancer  # Or use NodePort for testing externally
+  selector:
+    app: inference
+  ports:
+  - protocol: TCP
+    port: 80          # External port to access the service
+    targetPort: 8112  # Must match the containerPort in the Deployment
