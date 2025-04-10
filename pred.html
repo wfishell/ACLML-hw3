@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>CIFAR-10 Inference</title>
+  <style>
+    #dropzone {
+      border: 2px dashed #ccc;
+      border-radius: 10px;
+      padding: 50px;
+      text-align: center;
+      font-size: 18px;
+      color: #555;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>CIFAR-10 Inference</h1>
+  <h3>Drag in a picture and have a CNN predict whether it is an airplane,  automobile, bird, cat, deer, dog, frog, horse, ship, or truck</h3>
+  <div id="dropzone">Drag and drop your image here, or click to select</div>
+  <input type="file" id="fileInput" style="display:none" accept="image/*">
+  <button id="runBtn">Run Inference</button>
+  <div id="result"></div>
+
+  <script>
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fileInput');
+    let selectedFile = null;
+
+    dropzone.addEventListener('click', () => fileInput.click());
+
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.style.backgroundColor = "#eee";
+    });
+
+    dropzone.addEventListener('dragleave', (e) => {
+      e.preventDefault();
+      dropzone.style.backgroundColor = "";
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.style.backgroundColor = "";
+      // Clear any previous result output
+      document.getElementById('result').innerText = "";
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        selectedFile = e.dataTransfer.files[0];
+        dropzone.innerText = selectedFile.name;
+        fileInput.files = e.dataTransfer.files;
+        e.dataTransfer.clearData();
+      }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      // Clear any previous result output when a new file is selected
+      document.getElementById('result').innerText = "";
+      if (e.target.files && e.target.files.length > 0) {
+        selectedFile = e.target.files[0];
+        dropzone.innerText = selectedFile.name;
+      }
+    });
+
+    document.getElementById('runBtn').addEventListener('click', () => {
+      if (!selectedFile) {
+        alert("Please select an image.");
+        return;
+      }
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      
+      fetch('/predict', {
+        method: 'POST',
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        // Use the key 'predicted_class' as defined by the backend.
+        document.getElementById('result').innerText = "Predicted class: " + data.predicted_class;
+      })
+      .catch(err => {
+        console.error(err);
+        document.getElementById('result').innerText = "Error: " + err;
+      });
+    });
+  </script>
+</body>
+</html>
