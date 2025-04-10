@@ -1,0 +1,20 @@
+FROM pytorch/pytorch:2.0.0-cuda11.7-cudnn8-runtime
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY inference.py .
+
+COPY templates/ templates/
+
+
+RUN mkdir -p /model
+VOLUME ["/model"]
+
+# Expose the port the Flask app runs on (e.g., 8111)
+EXPOSE 8111
+
+# Set the default command to run the inference script using python3
+CMD ["python3", "inference.py","--model-dir", "/model"]

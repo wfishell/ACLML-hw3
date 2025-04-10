@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nvidia-smi-test
+spec:
+  containers:
+  - name: nvidia-smi
+    image: pytorch/pytorch:2.0.0-cuda11.7-cudnn8-runtime
+    command: ["nvidia-smi"]
+    resources:
+      limits:
+        nvidia.com/gpu: 1
+  restartPolicy: OnFailure

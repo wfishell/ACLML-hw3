@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: training-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: training
+  template:
+    metadata:
+      labels:
+        app: training
+    spec:
+      # Force this pod to run on a specific node (not usually recommended for production, but okay for testing).
+      nodeName: gke-kub-cluster-main-default-pool-432775b7-6l0c
+      
+      # Define your containers.
+      containers:
+      - name: training-container
+        image: us-east1-docker.pkg.dev/performance-modeling-analysis/training-image/training-image1:latest
+
+        # If your container runs a training script by default, no entrypoint override needed.
+        # If you need to specify a command to run, you can do so:
+        # command: ["python", "train.py"]
+        
+        # Volume mount your PVC at /model
+        volumeMounts:
+        - name: model-volume
+          mountPath: /model
+      
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+      # Define the volumes, referencing your PVC.
+      volumes:
+      - name: model-volume
+        persistentVolumeClaim:
+          claimName: pvc-model-bucket
