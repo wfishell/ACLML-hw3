@@ -13,7 +13,7 @@ spec:
         app: training
     spec:
       # Force this pod to run on a specific node (not usually recommended for production, but okay for testing).
-      nodeName: gke-kub-cluster-main-default-pool-432775b7-6l0c
+      nodeName: gke-kub-cluster-main1-default-pool-6d2f5c5a-q69n
       
       # Define your containers.
       containers:
