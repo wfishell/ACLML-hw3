@@ -14,12 +14,15 @@ spec:
     spec:
       # Optional: force scheduling to a specific node.
       # Remove or comment this line if you want Kubernetes to schedule the pod automatically.
-      nodeName: gke-kub-cluster-main-default-pool-844b9c40-0xj7
+      nodeName: gke-kub-cluster-main1-default-pool-6d2f5c5a-q69n
       containers:
       - name: inference-container
         image: us-east1-docker.pkg.dev/performance-modeling-analysis/training-image/inference-image1:latest
+        command: ["python3", "inference.py"]
         ports:
-        - containerPort: 8112
+        - protocol: TCP
+          containerPort: 8080
+          
         volumeMounts:
         - name: model-volume
           mountPath: /model
@@ -41,5 +44,5 @@ spec:
     app: inference
   ports:
   - protocol: TCP
-    port: 80          # External port to access the service
-    targetPort: 8112  # Must match the containerPort in the Deployment
+    port: 8080          # External port to access the service
+    targetPort: 8080  # Must match the containerPort in the Deployment
