@@ -18,8 +18,7 @@ COPY templates/ templates/
 RUN mkdir -p /model
 VOLUME ["/model"]
 
-# Expose the port the Flask app runs on (e.g., 8111)
-EXPOSE 8111
+EXPOSE 8080
 
 # Set the default command to run the inference script using python3
 CMD ["python3", "inference.py","--model-dir", "/model"]
