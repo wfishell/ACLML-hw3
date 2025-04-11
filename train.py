@@ -122,13 +122,8 @@ if __name__ == "__main__":
     print("Label:", sample["label"])
     
     # Train the model
-    trained_model = train_model(dataset, num_epochs=5, batch_size=512, learning_rate=0.01)
+    trained_model = train_model(dataset, num_epochs=1, batch_size=512, learning_rate=0.01)
     # After training is complete, export the model's state dict.
     local_model_path = "/model/cnn_model.pth"
     torch.save(trained_model, local_model_path)
     print(f"Model saved locally at: {local_model_path}")
-    
-    
-    
-
-
