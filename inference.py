@@ -4,6 +4,7 @@ import torch
 import torch.nn.functional as F
 from PIL import Image
 import numpy as np
+import torch.nn as nn
 from flask import Flask, request, jsonify, render_template, send_from_directory
 
 app = Flask(__name__)
@@ -14,6 +15,47 @@ CIFAR10_CLASSES = [
     "dog", "frog", "horse", "ship", "truck"
 ]
 
+class CNN(nn.Module):
+    def __init__(self, num_classes=10):
+        super(CNN, self).__init__()
+        # Convolutional layers:
+        self.conv1 = nn.Conv2d(3, 32, kernel_size=3, padding=1)
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
+        self.conv3 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
+        
+        # Pooling layer: kernel size 2, which halves the dimensions.
+        self.pool = nn.MaxPool2d(2, 2)
+        
+        # Dropout layer with a dropout probability of 50%
+        self.dropout = nn.Dropout(0.5)
+        
+        # Fully connected layers:
+        self.fc1 = nn.Linear(128 * 4 * 4, 256)
+        self.fc2 = nn.Linear(256, 128)
+        self.fc3 = nn.Linear(128, num_classes)
+    
+    def forward(self, x):
+        # Forward pass through conv layers with ReLU activations and pooling
+        x = F.relu(self.conv1(x))   # (batch, 32, 32, 32)
+        x = self.pool(x)            # (batch, 32, 16, 16)
+        x = F.relu(self.conv2(x))   # (batch, 64, 16, 16)
+        x = self.pool(x)            # (batch, 64, 8, 8)
+        x = F.relu(self.conv3(x))   # (batch, 128, 8, 8)
+        x = self.pool(x)            # (batch, 128, 4, 4)
+        
+        # Flatten the output for fully connected layers
+        x = x.reshape(x.size(0), -1)  # (batch, 128*4*4)
+        
+        # Fully connected layers with dropout applied after the first two layers
+        x = F.relu(self.fc1(x))     # (batch, 256)
+        x = self.dropout(x)
+        x = F.relu(self.fc2(x))     # (batch, 128)
+        x = self.dropout(x)
+        x = self.fc3(x)             # (batch, num_classes)
+        
+        return x
+
+
 def load_model(model_path):
     """
     Loads the trained model.
@@ -23,35 +65,12 @@ def load_model(model_path):
     """
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
-    if os.path.exists(model_path):
-        model = torch.load(model_path, map_location=device)
-        model.to(device)
-        model.eval()
-        print(f"Loaded model from {model_path}")
-        return model, device
-    else:
-        print(f"Model file {model_path} not found. Using a dummy model for testing.")
-        import random
-        class DummyModel:
-            def __init__(self, num_classes=10):
-                self.num_classes = num_classes
-            def to(self, device):
-                self.device = device
-                return self
-            def eval(self):
-                pass
-            def __call__(self, x):
-                # Instead of using torch.rand, pick a random integer between 0 and num_classes-1
-                batch_size = x.shape[0]
-                # Create a tensor of size (batch_size, ) with random integers
-                random_indices = [random.randint(0, self.num_classes - 1) for _ in range(batch_size)]
-                # Build a one-hot like tensor such that argmax returns the random index.
-                outputs = torch.zeros(batch_size, self.num_classes, device=self.device)
-                for i, idx in enumerate(random_indices):
-                    outputs[i, idx] = 1.0
-                return outputs
-        dummy_model = DummyModel().to(device)
-        return dummy_model, device
+    
+    model = torch.load(model_path, map_location=device)
+    model.to(device)
+    model.eval()
+    print(f"Loaded model from {model_path}")
+    return model, device
 
 def preprocess_image(image_path):
     """
@@ -112,4 +131,5 @@ if __name__ == '__main__':
     # Decide which mode to run: Web server or CLI.
     # For example, you could check for an environment variable:
    
-    app.run(debug=True, host='0.0.0.0',port=8111)
+    app.run(debug=True, host='0.0.0.0',port=8080
+)
